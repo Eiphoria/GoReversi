@@ -1,0 +1,51 @@
+// package service
+
+import (
+	"errors"
+	"log"
+	"testing"
+
+	"github.com/Eiphoria/GoReversi/internal/config"
+	"github.com/Eiphoria/GoReversi/internal/repository"
+	"github.com/Eiphoria/GoReversi/internal/repository/migrations"
+	"github.com/Eiphoria/GoReversi/pkg/assert"
+
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
+)
+
+func TestCreateUser(t *testing.T) {
+	cfg := config.New()
+
+	d, err := iofs.New(migrations.Migrations, ".")
+	if err != nil {
+		log.Fatal(err, "1")
+	}
+
+	m, err := migrate.NewWithSourceInstance("iofs", d, "postgres://postgres:postgres@127.0.0.1:8624/postgres?sslmode=disable")
+	if err != nil {
+		log.Fatal(err, "2")
+	}
+
+	err = m.Up()
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatal(err, "3")
+	}
+	repo, err := repository.New(cfg.DBConf)
+	if err != nil {
+		log.Fatal(err, "4")
+	}
+	svc := New(repo)
+
+	t.Run("all good", func(t *testing.T) {})
+	t.Run("wrong username", func(t *testing.T) {
+		err := svc.CreateUser(, "te", "testpasswordsssssssss")
+		assert.Equal(t, ErrInvalidData, err)
+
+	})
+	t.Run("wrong password", func(t *testing.T) {})
+	t.Run("pswrd no specilal and digit", func(t *testing.T) {})
+	t.Run("repo error", func(t *testing.T) {})
+
+}
