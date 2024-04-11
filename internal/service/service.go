@@ -2,11 +2,14 @@ package service
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"unicode"
 
 	"github.com/Eiphoria/GoReversi/internal/repository"
+	"github.com/Eiphoria/GoReversi/pkg/logger"
 )
 
 var ErrInvalidData = errors.New("invalid data")
@@ -44,10 +47,19 @@ func (s *Service) CreateUser(ctx context.Context, username, password string) err
 		return ErrInvalidData
 	}
 
-	err := s.repo.CreateUser(ctx, username, password)
+	hash := GetMD5Hash(password)
+
+	err := s.repo.CreateUser(ctx, username, hash)
 	if err != nil {
+		logger.Logger.Error("repo create user: %w", err)
 		return fmt.Errorf("repo create user: %w", err)
+
 	}
 
 	return nil
+}
+
+func GetMD5Hash(text string) string {
+	hash := md5.Sum([]byte(text))
+	return hex.EncodeToString(hash[:])
 }

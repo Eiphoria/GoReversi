@@ -9,7 +9,7 @@ import (
 
 	"github.com/Eiphoria/GoReversi/internal/config"
 	"github.com/Eiphoria/GoReversi/internal/repository"
-	"github.com/Eiphoria/GoReversi/internal/repository/migrations"
+	migrations "github.com/Eiphoria/GoReversi/internal/repository/miggrations"
 	"github.com/Eiphoria/GoReversi/internal/server"
 	"github.com/Eiphoria/GoReversi/internal/service"
 )
