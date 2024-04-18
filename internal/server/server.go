@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/Eiphoria/GoReversi/internal/service"
@@ -9,11 +10,13 @@ import (
 type Server struct {
 	serv    http.Server
 	service *service.Service
+	logger  *slog.Logger
 }
 
-func New(service *service.Service) *Server {
+func New(service *service.Service, logger *slog.Logger) *Server {
 	s := Server{
 		service: service,
+		logger:  logger,
 	}
 	m := http.NewServeMux()
 	m.HandleFunc("/api/v1/health", s.health)

@@ -9,18 +9,19 @@ import (
 	"unicode"
 
 	"github.com/Eiphoria/GoReversi/internal/repository"
-	"github.com/Eiphoria/GoReversi/pkg/logger"
 )
 
 var ErrInvalidData = errors.New("invalid data")
 
 type Service struct {
 	repo *repository.Repository
+	salt string
 }
 
-func New(rep *repository.Repository) *Service {
+func New(rep *repository.Repository, salt string) *Service {
 	return &Service{
 		repo: rep,
+		salt: salt,
 	}
 }
 
@@ -47,19 +48,18 @@ func (s *Service) CreateUser(ctx context.Context, username, password string) err
 		return ErrInvalidData
 	}
 
-	hash := GetMD5Hash(password)
+	hash := getMD5Hash(password, s.salt)
 
 	err := s.repo.CreateUser(ctx, username, hash)
 	if err != nil {
-		logger.Logger.Error("repo create user: %w", err)
 		return fmt.Errorf("repo create user: %w", err)
-
 	}
 
 	return nil
 }
 
-func GetMD5Hash(text string) string {
-	hash := md5.Sum([]byte(text))
+func getMD5Hash(text, salt string) string {
+	salted := text + salt
+	hash := md5.Sum([]byte(salted))
 	return hex.EncodeToString(hash[:])
 }

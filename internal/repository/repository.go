@@ -23,7 +23,7 @@ func New(cfg config.DBConfig) (*Repository, error) {
 }
 
 func (r *Repository) CreateUser(ctx context.Context, username, password string) error {
-	_, err := r.db.ExecContext(ctx, `INSERT INTO users (username, password) VALUES ($1,$2)`, username, password)
+	_, err := r.db.ExecContext(ctx, `INSERT INTO users (username, password, created_at) VALUES ($1,$2)`, username, password)
 	if err != nil {
 		return fmt.Errorf("db exec context: %w", err)
 	}

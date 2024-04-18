@@ -3,7 +3,8 @@ package config
 import "os"
 
 type Config struct {
-	DBConf DBConfig
+	DBConf   DBConfig
+	HashSalt string
 	// Debug    bool
 	// Port     int
 	// Username string
@@ -21,5 +22,6 @@ func New() *Config {
 		DBConf: DBConfig{
 			ConnectionURL: os.Getenv("DB_CONN"),
 		},
+		HashSalt: os.Getenv("HASH_SALT"),
 	}
 }
