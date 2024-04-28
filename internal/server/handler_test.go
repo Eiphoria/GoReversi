@@ -3,9 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,14 +13,14 @@ import (
 	migrations "github.com/Eiphoria/GoReversi/internal/repository/miggrations"
 	"github.com/Eiphoria/GoReversi/internal/service"
 	"github.com/Eiphoria/GoReversi/pkg/assert"
+	"github.com/Eiphoria/GoReversi/pkg/logger"
+	"github.com/Eiphoria/GoReversi/pkg/migrator"
 
-	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
 func TestHealth(t *testing.T) {
-	s := New(nil)
+	s := New(nil, nil)
 	t.Run("success", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
 		w := httptest.NewRecorder()
@@ -53,33 +51,25 @@ func TestHealth(t *testing.T) {
 }
 
 func TestRegister(t *testing.T) {
-
 	cfg := config.Config{
 		DBConf: config.DBConfig{
 			ConnectionURL: "postgres://postgres:postgres@127.0.0.1:8624/postgres?sslmode=disable",
 		},
+		HashSalt: "d74f9086f3c7482b5eb22c26c9793396",
 	}
 
-	d, err := iofs.New(migrations.Migrations, ".")
+	err := migrator.Migratos(migrations.Migrations, cfg.DBConf.ConnectionURL)
 	if err != nil {
-		log.Fatal(err, "1")
+		t.Fatal("migratos error: %w", err)
 	}
 
-	m, err := migrate.NewWithSourceInstance("iofs", d, cfg.DBConf.ConnectionURL) //New("file:///C:/Games/gulagovna/GoReversi/internal/repository/migrations", "postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable")
-	if err != nil {
-		log.Fatal(err, "2")
-	}
-
-	err = m.Up()
-	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatal(err, "3")
-	}
 	repo, err := repository.New(cfg.DBConf)
 	if err != nil {
-		log.Fatal(err, "4")
+		t.Error("repository new error: %w", err)
 	}
-	svc := service.New(repo)
-	s := New(svc)
+
+	svc := service.New(repo, cfg.HashSalt)
+	s := New(svc, logger.New())
 	t.Run("not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/reg", nil)
 		w := httptest.NewRecorder()

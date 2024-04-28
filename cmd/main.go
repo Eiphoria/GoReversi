@@ -1,34 +1,22 @@
 package main
 
 import (
-	"errors"
-
-	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
 
 	"github.com/Eiphoria/GoReversi/internal/config"
 	"github.com/Eiphoria/GoReversi/internal/repository"
 	migrations "github.com/Eiphoria/GoReversi/internal/repository/miggrations"
 	"github.com/Eiphoria/GoReversi/internal/server"
 	"github.com/Eiphoria/GoReversi/internal/service"
+	"github.com/Eiphoria/GoReversi/pkg/logger"
+	"github.com/Eiphoria/GoReversi/pkg/migrator"
 )
 
 func main() {
 	cfg := config.New()
 
-	d, err := iofs.New(migrations.Migrations, ".")
+	err := migrator.Migratos(migrations.Migrations, cfg.DBConf.ConnectionURL)
 	if err != nil {
-		panic(err)
-	}
-
-	m, err := migrate.NewWithSourceInstance("iofs", d, cfg.DBConf.ConnectionURL)
-	if err != nil {
-		panic(err)
-	}
-
-	err = m.Up()
-	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		panic(err)
 	}
 
@@ -37,8 +25,9 @@ func main() {
 		panic(err)
 	}
 
-	svc := service.New(repo)
-	s := server.New(svc)
+	svc := service.New(repo, cfg.HashSalt)
+
+	s := server.New(svc, logger.New())
 	if err := s.Run(); err != nil {
 		panic(err)
 	}
